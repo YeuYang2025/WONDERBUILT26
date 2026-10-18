@@ -1,0 +1,685 @@
+/* ============================================================================
+   CURLBY — prototype styles
+   Loaded by App.jsx after the Vite template's index.css, so the few template
+   rules that assume a centred document (max width, borders, light background)
+   are overridden here instead of being edited in place.
+   ========================================================================= */
+
+:root {
+  --cb-bg: #04060b;
+  --cb-ink: #eaeef7;
+  --cb-ink-dim: #8b95ab;
+  --cb-hair: rgba(255, 255, 255, 0.1);
+  --cb-accent: #a8c8ff;
+  --cb-accent-soft: rgba(168, 200, 255, 0.55);
+}
+
+html {
+  background: var(--cb-bg);
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  background: var(--cb-bg);
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  border: 0;
+  margin: 0;
+  display: block;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.cb-root {
+  --sans: system-ui, 'Segoe UI', Inter, Roboto, 'Helvetica Neue', sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  position: relative;
+  color-scheme: dark;
+  color: var(--cb-ink);
+  font: 16px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  background: var(--cb-bg);
+}
+
+/* the page's scroll length — the stage floating above it is fixed */
+.cb-scroll-space {
+  height: 460vh;
+}
+
+/* ----------------------------------------------------------------- stage */
+
+.cb-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  background: #04060b;
+}
+
+.cb-layer {
+  position: absolute;
+  inset: 0;
+  /* inherited by the R3F wrapper and the canvas: all input goes to .cb-pointer-layer */
+  pointer-events: none;
+  will-change: opacity, filter;
+}
+
+.cb-layer--device {
+  z-index: 2;
+}
+
+/* the interaction layer sits above both canvases and below the HUD */
+.cb-pointer-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.cb-pointer-layer:active {
+  cursor: grabbing;
+}
+
+/* ---------------------------------------------------- blurred street layer */
+
+.cb-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #05070d;
+}
+
+.cb-backdrop__sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 72% at 52% 97%, rgba(255, 191, 138, 0.5) 0%, rgba(255, 138, 92, 0.18) 34%, transparent 64%),
+    radial-gradient(80% 55% at 16% 8%, rgba(96, 138, 255, 0.22), transparent 66%),
+    radial-gradient(70% 50% at 84% 18%, rgba(148, 106, 255, 0.18), transparent 70%),
+    linear-gradient(180deg, #08101f 0%, #101a30 40%, #1d2740 66%, #2b3145 86%, #14161f 100%);
+}
+
+.cb-backdrop__glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(58% 42% at 50% 84%, rgba(255, 203, 150, 0.5), transparent 72%);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  will-change: opacity;
+}
+
+.cb-backdrop__silhouettes {
+  position: absolute;
+  inset: -12%;
+  will-change: opacity, filter;
+  transform: translateZ(0);
+}
+.cb-backdrop__buildings {
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  bottom: 16%;
+  height: 62%;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(7, 9, 16, 0.94) 0px,
+    rgba(7, 9, 16, 0.94) 34px,
+    rgba(6, 8, 15, 0) 34px,
+    rgba(6, 8, 15, 0) 47px,
+    rgba(10, 13, 22, 0.88) 47px,
+    rgba(10, 13, 22, 0.88) 99px,
+    rgba(6, 8, 15, 0) 99px,
+    rgba(6, 8, 15, 0) 112px,
+    rgba(8, 10, 18, 0.92) 112px,
+    rgba(8, 10, 18, 0.92) 152px,
+    rgba(6, 8, 15, 0) 152px,
+    rgba(6, 8, 15, 0) 179px,
+    rgba(11, 14, 24, 0.86) 179px,
+    rgba(11, 14, 24, 0.86) 232px,
+    rgba(6, 8, 15, 0) 232px,
+    rgba(6, 8, 15, 0) 248px
+  );
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 100%);
+}
+
+.cb-backdrop__buildings--far {
+  opacity: 0.45;
+  filter: blur(5px);
+  transform: translateY(-22%) scaleX(1.35);
+}
+
+.cb-backdrop__buildings--near {
+  opacity: 0.85;
+}
+
+.cb-backdrop__people {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4%;
+  height: 34%;
+}
+
+.cb-backdrop__people span {
+  position: absolute;
+  bottom: 0;
+  width: 6vmin;
+  height: 21vmin;
+  border-radius: 48% 48% 40% 40%;
+  background:
+    radial-gradient(52% 26% at 50% 12%, rgba(5, 7, 12, 0.9), rgba(5, 7, 12, 0) 74%),
+    linear-gradient(180deg, rgba(5, 7, 12, 0.85), rgba(5, 7, 12, 0.5));
+  filter: blur(7px);
+  opacity: 0.72;
+}
+
+.cb-backdrop__people span:nth-child(1) {
+  left: 8%;
+  transform: scale(0.85);
+}
+
+.cb-backdrop__people span:nth-child(2) {
+  left: 26%;
+  bottom: 1%;
+  transform: scale(1.05);
+}
+
+.cb-backdrop__people span:nth-child(3) {
+  left: 48%;
+  transform: scale(0.9);
+}
+
+.cb-backdrop__people span:nth-child(4) {
+  left: 66%;
+  bottom: 2%;
+  transform: scale(1.12);
+}
+
+.cb-backdrop__people span:nth-child(5) {
+  left: 84%;
+  transform: scale(0.78);
+}
+
+.cb-backdrop__street {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  filter: blur(9px);
+  background:
+    radial-gradient(closest-side, rgba(255, 205, 150, 0.62), transparent) 12% 62% / 22vmin 14vmin no-repeat,
+    radial-gradient(closest-side, rgba(255, 180, 130, 0.5), transparent) 34% 78% / 15vmin 10vmin no-repeat,
+    radial-gradient(closest-side, rgba(198, 222, 255, 0.45), transparent) 58% 68% / 18vmin 12vmin no-repeat,
+    radial-gradient(closest-side, rgba(255, 212, 160, 0.55), transparent) 78% 74% / 20vmin 13vmin no-repeat,
+    linear-gradient(180deg, rgba(28, 32, 48, 0) 0%, rgba(20, 24, 36, 0.8) 55%, rgba(8, 10, 18, 1) 100%);
+}
+
+.cb-backdrop__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(78% 62% at 50% 46%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.cb-backdrop__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+/* ------------------------------------------------------------------- HUD */
+
+.cb-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  padding: clamp(16px, 3vw, 34px) clamp(16px, 3.4vw, 46px);
+  box-sizing: border-box;
+}
+
+.cb-hud button {
+  pointer-events: auto;
+  font: inherit;
+  color: inherit;
+}
+
+/* top bar ------------------------------------------------------------------ */
+
+.cb-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cb-brand__mark {
+  display: block;
+  font-size: clamp(15px, 1.45vw, 19px);
+  font-weight: 600;
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+}
+
+.cb-brand__sub {
+  display: block;
+  margin-top: 10px;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--cb-ink-dim);
+}
+
+.cb-finish {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  text-align: right;
+}
+
+.cb-finish__label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cb-ink-dim);
+}
+
+.cb-finish__name {
+  font-size: clamp(19px, 2.1vw, 30px);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: var(--cb-ink);
+  text-shadow: 0 0 26px var(--cb-accent-soft);
+}
+
+.cb-swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.cb-swatch {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s ease;
+}
+
+.cb-swatch__dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45);
+}
+
+.cb-swatch:hover {
+  transform: translateY(-1px);
+}
+
+.cb-swatch:focus-visible {
+  outline: 2px solid var(--cb-accent);
+  outline-offset: 3px;
+}
+
+.cb-swatch[data-active='true'] {
+  border-color: var(--cb-accent);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.05),
+    0 0 22px var(--cb-accent-soft);
+}
+
+.cb-swatch[data-active='true'] .cb-swatch__dot {
+  transform: scale(1.08);
+}
+
+/* stage captions ----------------------------------------------------------- */
+
+.cb-stages {
+  position: absolute;
+  left: clamp(16px, 3.4vw, 46px);
+  bottom: clamp(84px, 12vh, 130px);
+  display: grid;
+  gap: 14px;
+  width: min(34ch, 40vw);
+}
+
+.cb-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: baseline;
+  opacity: 0.3;
+  transform: translateX(-6px);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s ease;
+}
+
+.cb-card[data-active='true'] {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.cb-card__index {
+  font: 11px/1.6 var(--mono);
+  letter-spacing: 0.16em;
+  color: var(--cb-accent);
+}
+
+.cb-card__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.cb-card__copy {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--cb-ink-dim);
+  max-width: 34ch;
+}
+
+/* progress rail ------------------------------------------------------------ */
+
+.cb-rail {
+  position: absolute;
+  right: clamp(14px, 2.6vw, 32px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.cb-rail__value,
+.cb-rail__label {
+  font: 10px/1 var(--mono);
+  letter-spacing: 0.2em;
+  color: var(--cb-ink-dim);
+  writing-mode: vertical-rl;
+}
+
+.cb-rail__value {
+  color: var(--cb-ink);
+}
+
+.cb-rail__track {
+  position: relative;
+  width: 2px;
+  height: 30vh;
+  max-height: 260px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+.cb-rail__fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleY(0);
+  transform-origin: top;
+  background: linear-gradient(180deg, var(--cb-accent), rgba(255, 255, 255, 0.06));
+}
+
+/* acoustic link meter ------------------------------------------------------ */
+
+.cb-signal {
+  position: absolute;
+  right: clamp(16px, 3.4vw, 46px);
+  bottom: clamp(20px, 4vh, 40px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cb-signal__label,
+.cb-signal__value {
+  font: 10px/1 var(--mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cb-ink-dim);
+}
+
+.cb-signal__track {
+  position: relative;
+  width: clamp(70px, 12vw, 130px);
+  height: 3px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+.cb-signal__fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(1);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--cb-accent), rgba(255, 255, 255, 0.35));
+}
+
+/* return-to-ear, hint and grab ring --------------------------------------- */
+
+.cb-return {
+  position: absolute;
+  right: clamp(16px, 3.4vw, 46px);
+  bottom: clamp(52px, 8vh, 84px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cb-ink);
+  background: rgba(12, 16, 26, 0.55);
+  border: 1px solid var(--cb-hair);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease,
+    border-color 0.3s ease;
+}
+
+.cb-return[data-visible='true'] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.cb-return:not([data-visible='true']) {
+  pointer-events: none;
+}
+
+.cb-return:hover {
+  border-color: var(--cb-accent);
+}
+
+.cb-return kbd {
+  font: 10px/1 var(--mono);
+  padding: 3px 5px;
+  border: 1px solid var(--cb-hair);
+  border-radius: 4px;
+  color: var(--cb-ink-dim);
+}
+
+.cb-hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(16px, 3.4vh, 32px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cb-ink-dim);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.cb-hint__sep {
+  color: var(--cb-accent);
+}
+
+.cb-grab {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--grab-size, 160px);
+  height: var(--grab-size, 160px);
+  margin-left: calc(var(--grab-size, 160px) / -2);
+  margin-top: calc(var(--grab-size, 160px) / -2);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.cb-grab__ring {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed var(--cb-accent-soft);
+  border-radius: 50%;
+  animation: cb-grab-pulse 3.6s ease-in-out infinite;
+}
+
+.cb-grab__label {
+  font: 10px/1 var(--mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cb-accent);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(6, 9, 16, 0.6);
+  backdrop-filter: blur(6px);
+}
+
+/* ------------------------------------------------------- responsive layout */
+
+@media (max-width: 860px) {
+  .cb-scroll-space {
+    height: 380vh;
+  }
+
+  .cb-hud {
+    padding: 14px 16px;
+  }
+
+  .cb-brand__sub {
+    display: none;
+  }
+
+  .cb-stages {
+    width: min(46ch, 80vw);
+    bottom: clamp(96px, 16vh, 150px);
+    gap: 10px;
+  }
+
+  .cb-card__copy {
+    font-size: 12px;
+  }
+
+  .cb-rail {
+    display: none;
+  }
+
+  .cb-hint {
+    white-space: normal;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    max-width: 74vw;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .cb-swatch {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cb-swatch__dot {
+    width: 23px;
+    height: 23px;
+  }
+}
+
+@media (max-width: 520px) {
+  .cb-finish__name {
+    font-size: 17px;
+  }
+
+  .cb-stages {
+    width: 84vw;
+    bottom: clamp(104px, 18vh, 168px);
+  }
+
+  .cb-signal__track {
+    width: 56px;
+  }
+
+  .cb-signal__label {
+    display: none;
+  }
+}
+
+/* very short viewports (landscape phones): keep the copy from stacking up */
+@media (max-height: 560px) {
+  .cb-card__copy {
+    display: none;
+  }
+
+  .cb-stages {
+    bottom: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-grab__ring {
+    animation: none;
+  }
+
+  .cb-card,
+  .cb-return,
+  .cb-swatch {
+    transition-duration: 1ms;
+  }
+}
+
+@keyframes cb-grab-pulse {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.95;
+  }
+}
+
+
