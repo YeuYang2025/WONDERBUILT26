@@ -74,7 +74,14 @@ export const EAR = { x: -0.462, y: 0.048, z: -0.004 }
 export const DEVICE = {
   /** local units -> world units (the modelled device is ~1.8 local units tall) */
   scale: 0.22,
-  seatPosition: [-0.505, 0.056, -0.004],
+  /**
+   * Seated on the ear. X must be the same ear centre the rest of the scene uses (`EAR.x`,
+   * which is also what the camera aims at in the framed keyframe) so CURLBY projects to the
+   * middle of the viewport instead of sitting slightly to the left of it. The old -0.505 was
+   * 0.043 units — and therefore a constant fraction of the viewport width, worse on narrow
+   * screens — to the left of that axis. Y/Z are untouched, so the mount height is unchanged.
+   */
+  seatPosition: [EAR.x, 0.056, -0.004],
   seatRotation: [0.08, -Math.PI * 0.5 - 0.1, 0.06],
   /** where it waits, off screen, before the scroll carries it onto the ear */
   hoverPosition: [-3.15, 1.78, 1.05],
@@ -92,16 +99,56 @@ export const DEVICE = {
 /**
  * Camera keyframes: wide on the arriving head, a tight portrait of the ear while CURLBY
  * settles, then a long pull-back that reveals the street the echoes are mapping.
+ *
+ * The first two keys aim at `EAR.x`, because the rig renders the device at the ear's world
+ * position from the very first frame (see DeviceCanvas — it positions it at
+ * `DEVICE.seatPosition` and only animates its rotation). Aiming at the head's origin instead
+ * left CURLBY roughly 17% of the viewport width to the left of centre at the top of the page.
  */
 export const CAMERA_KEYS = [
-  { t: 0.0, pos: [-0.78, 0.24, 2.35], target: [-0.04, 0.06, 0.0] },
-  { t: 0.34, pos: [-0.9, 0.14, 2.3], target: [-0.16, 0.03, -0.02] },
+  { t: 0.0, pos: [-0.78, 0.24, 2.35], target: [EAR.x, 0.06, 0.0] },
+  { t: 0.34, pos: [-0.9, 0.14, 2.3], target: [EAR.x, 0.03, -0.02] },
   { t: 0.6, pos: [-2.02, 0.14, 1.02], target: [-0.44, -0.02, -0.02] },
   { t: 1.0, pos: [-0.5, 0.52, 4.1], target: [0.12, 0.06, -2.2] },
 ]
 
 /** Scroll range over which the blurred street resolves into the echo-lit city. */
 export const REVEAL = { from: 0.42, to: 0.96 }
+
+/**
+ * Scroll range over which the camera yaws to keep CURLBY on its optical axis. Anything off
+ * that axis renders off centre — by a share of the viewport width that grows as the viewport
+ * narrows — so the aim has to follow the ear, not the street. It opens as the device comes to
+ * rest on the ear (0.40, where the authored keys start aiming right of it) and is fully on by
+ * 0.52, covering the rest of the dwell and the whole reveal.
+ */
+export const DEVICE_CENTRE = { from: 0.4, to: 0.52 }
+
+/**
+ * The load entrance. CURLBY starts a full `rise` below its seat — comfortably under the bottom
+ * edge at any viewport size, since the rise and the model scale with the same camera distance —
+ * and floats up into frame while the black curtain lifts off the city behind it. `settle` is the
+ * small overshoot past the seat before it comes to rest; `blackHold`/`curtainOut` are the slice
+ * of the timeline over which the curtain leaves.
+ */
+export const ENTRANCE = { duration: 2, rise: 1.2, settle: 0.035, blackHold: 0.1, curtainOut: 0.72 }
+
+/**
+ * How far up CURLBY has come: 0 = still below the frame, 1 = seated (a hair over 1 while it
+ * settles). A soft start, a swift middle, a long glide — plus one gentle hump past the seat so
+ * the model arrives rather than simply stopping.
+ */
+export function entranceRise(t) {
+  const x = clamp01(t)
+  const glide = easeInOutCubic(x)
+  const u = clamp01((x - 0.62) / 0.38)
+  return glide + Math.pow(Math.sin(Math.PI * u), 2) * ENTRANCE.settle
+}
+
+/** The black curtain's opacity: held for a beat, then lifted to reveal the city behind the model. */
+export function entranceCurtain(t) {
+  return 1 - smoothstep(ENTRANCE.blackHold, ENTRANCE.curtainOut, clamp01(t))
+}
 
 export const STAGE_BREAKS = [0.3, 0.56, 0.82]
 

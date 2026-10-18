@@ -74,6 +74,17 @@ body {
   z-index: 2;
 }
 
+/* the load entrance curtain: black on the first paint, faded out by App's frame loop. It sits
+   above the street and the city but under the device layer, so CURLBY rises over the blackness
+   and the city arrives behind it. */
+.cb-entrance {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  pointer-events: none;
+}
+
 /* the interaction layer sits above both canvases and below the HUD */
 .cb-pointer-layer {
   position: fixed;
@@ -246,6 +257,8 @@ body {
   pointer-events: none;
   padding: clamp(16px, 3vw, 34px) clamp(16px, 3.4vw, 46px);
   box-sizing: border-box;
+  /* the load entrance raises this from 0, so the first paint is CURLBY on black (see App) */
+  opacity: 0;
 }
 
 .cb-hud button {
@@ -351,6 +364,195 @@ body {
   transform: scale(1.08);
 }
 
+/* sound control ------------------------------------------------------------ */
+
+.cb-sound {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 124px;
+  margin-top: 14px;
+  padding: 7px 13px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cb-ink-dim);
+  background: rgba(12, 16, 26, 0.42);
+  border: 1px solid var(--cb-hair);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition:
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.cb-sound:hover {
+  color: var(--cb-ink);
+  border-color: var(--cb-accent);
+}
+
+.cb-sound:focus-visible {
+  outline: 2px solid var(--cb-accent);
+  outline-offset: 3px;
+}
+
+.cb-sound[data-state='on'] {
+  color: var(--cb-ink);
+}
+
+.cb-sound__icon svg {
+  display: block;
+  overflow: visible;
+}
+
+.cb-sound__body {
+  fill: currentColor;
+}
+
+.cb-sound__wave {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.cb-sound[data-state='on'] .cb-sound__wave {
+  opacity: 0.95;
+}
+
+.cb-sound[data-state='on'] .cb-sound__wave--far {
+  opacity: 0.5;
+}
+
+.cb-sound__slash {
+  fill: none;
+  stroke: var(--cb-accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  transition: opacity 0.3s ease;
+}
+
+.cb-sound[data-state='on'] .cb-sound__slash {
+  opacity: 0;
+}
+
+/* product introduction ----------------------------------------------------- */
+
+.cb-intro {
+  position: absolute;
+  left: clamp(16px, 3.4vw, 46px);
+  top: clamp(150px, 21vh, 236px);
+  width: min(36ch, 30vw);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.45s ease,
+    visibility 0s linear 0.45s;
+}
+
+.cb-intro[data-visible='true'] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.45s ease;
+}
+
+/* a soft scrim keeps the copy legible over the lit city without hiding the scene */
+.cb-intro::before {
+  content: '';
+  position: absolute;
+  inset: -20% -22%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    118% 100% at 24% 50%,
+    rgba(4, 6, 11, 0.86) 0%,
+    rgba(4, 6, 11, 0.5) 46%,
+    rgba(4, 6, 11, 0) 78%
+  );
+}
+
+/* the copy lifts into place a beat apart, so the reveal reads as editorial rather than a fade */
+.cb-intro > * {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.cb-intro[data-visible='true'] > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cb-intro[data-visible='true'] > *:nth-child(1) {
+  transition-delay: 0.05s;
+}
+
+.cb-intro[data-visible='true'] > *:nth-child(2) {
+  transition-delay: 0.12s;
+}
+
+.cb-intro[data-visible='true'] > *:nth-child(3) {
+  transition-delay: 0.19s;
+}
+
+.cb-intro[data-visible='true'] > *:nth-child(4) {
+  transition-delay: 0.26s;
+}
+
+.cb-intro__eyebrow {
+  margin: 0 0 16px;
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+  color: var(--cb-accent);
+}
+
+.cb-intro__eyebrow::before {
+  content: '';
+  display: block;
+  width: 46px;
+  height: 1px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, var(--cb-accent), rgba(255, 255, 255, 0));
+}
+
+.cb-intro__title {
+  margin: 0;
+  font-size: clamp(24px, 2.8vw, 38px);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.012em;
+  color: var(--cb-ink);
+  text-shadow: 0 0 34px var(--cb-accent-soft);
+}
+
+.cb-intro__lead {
+  margin: 14px 0 0;
+  font-size: clamp(13px, 1.15vw, 15px);
+  line-height: 1.45;
+  letter-spacing: 0.015em;
+  color: rgba(234, 238, 247, 0.9);
+}
+
+.cb-intro__copy {
+  margin: 18px 0 0;
+  font-size: clamp(12px, 1.05vw, 13.5px);
+  line-height: 1.62;
+  color: rgba(226, 232, 244, 0.74);
+}
+
+/* while the introduction is open the stage captions step back, so nothing competes for reading */
+.cb-intro[data-visible='true'] ~ .cb-stages {
+  opacity: 0.12;
+}
+
 /* stage captions ----------------------------------------------------------- */
 
 .cb-stages {
@@ -358,6 +560,7 @@ body {
   left: clamp(16px, 3.4vw, 46px);
   bottom: clamp(84px, 12vh, 130px);
   display: grid;
+  transition: opacity 0.45s ease;
   gap: 14px;
   width: min(34ch, 40vw);
 }
@@ -586,6 +789,21 @@ body {
     height: 380vh;
   }
 
+  .cb-intro {
+    top: clamp(116px, 16vh, 168px);
+    right: clamp(16px, 3.4vw, 46px);
+    width: auto;
+  }
+
+  .cb-intro__title {
+    font-size: clamp(21px, 5.4vw, 28px);
+  }
+
+  .cb-intro__copy {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
   .cb-hud {
     padding: 14px 16px;
   }
@@ -653,6 +871,18 @@ body {
     display: none;
   }
 
+  .cb-intro {
+    top: 72px;
+  }
+
+  .cb-intro__title {
+    font-size: 20px;
+  }
+
+  .cb-intro__copy {
+    font-size: 11px;
+  }
+
   .cb-stages {
     bottom: 58px;
   }
@@ -663,9 +893,15 @@ body {
     animation: none;
   }
 
+  .cb-entrance {
+    display: none;
+  }
+
   .cb-card,
   .cb-return,
-  .cb-swatch {
+  .cb-swatch,
+  .cb-intro,
+  .cb-intro > * {
     transition-duration: 1ms;
   }
 }

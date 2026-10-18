@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { COLORWAYS } from '../lib/colorways.js'
 import { clamp, damp, runtime } from '../lib/runtime.js'
-import { DEVICE, devicePose, headPose } from '../lib/sceneMath.js'
+import { DEVICE, ENTRANCE, devicePose, entranceRise, headPose } from '../lib/sceneMath.js'
 import { glowTexture } from '../lib/textures.js'
 import SceneCamera from './SceneCamera.jsx'
 import HumanHead from './HumanHead.jsx'
@@ -201,6 +201,11 @@ function Rig({ colourIndex }) {
     const device = deviceRef.current
     if (device) {
       state.world.copy(seat).add(state.offset)
+      /* The load entrance: a pure vertical lift that eases to exactly zero, so the camera's
+         horizontal frame — and CURLBY's centring — are untouched and the scroll system takes
+         over with no handover seam. */
+      const lift = (1 - entranceRise(runtime.entrance.progress)) * ENTRANCE.rise
+      if (lift > 0.0005) state.world.y -= lift
       // a whisper of life while it is worn
       if (home > 0.001 && !state.dragging) {
         state.world.y += Math.sin(t * 1.05) * 0.0035 * home

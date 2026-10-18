@@ -18,6 +18,10 @@ export default function Experience({ colourIndex }) {
       <div className="cb-layer" data-role={ROLES.cityCanvas}>
         <CityCanvas />
       </div>
+      {/* the entrance curtain: black while the page loads, lifted by App's frame loop. It sits
+          above the street and the city but below the device layer, so CURLBY rises in front of
+          the blackness and the city fades in behind it. */}
+      <div className="cb-entrance" data-role={ROLES.entrance} />
       <div className="cb-layer cb-layer--device" data-role={ROLES.deviceCanvas}>
         <DeviceCanvas colourIndex={colourIndex} />
       </div>

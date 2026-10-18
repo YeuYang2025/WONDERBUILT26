@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Experience from './components/Experience.jsx'
 import Hud from './components/Hud.jsx'
+import { audio } from './lib/audio.js'
 import { COLORWAYS, DEFAULT_COLOUR, wrapColour } from './lib/colorways.js'
 import { ROLES, clamp, damp, runtime } from './lib/runtime.js'
-import { revealAmount, stageIndex } from './lib/sceneMath.js'
+import { ENTRANCE, entranceCurtain, revealAmount, stageIndex } from './lib/sceneMath.js'
 import './curlby.css'
 
 /**
@@ -20,6 +21,8 @@ import './curlby.css'
 
 export default function App() {
   const [colourIndex, setColourIndex] = useState(DEFAULT_COLOUR)
+  /** 'ready' until a gesture lets the browser play audio, then 'on' / 'off' (or 'unavailable') */
+  const [soundState, setSoundState] = useState('ready')
   const rootRef = useRef(null)
   const stageRef = useRef(null)
   const targets = useRef({})
@@ -37,9 +40,25 @@ export default function App() {
     runtime.held = false
   }, [])
 
+  const toggleSound = useCallback(() => {
+    audio.toggle()
+  }, [])
+
   /* ---------------- preferences + colourway, pushed into the imperative layers */
   useEffect(() => {
     runtime.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }, [])
+
+  /* ---------------- sound: on by default — the static is attempted as the app mounts, and if
+     the browser insists on a gesture the first click or key press starts it instead */
+  useEffect(() => {
+    audio.onChange = setSoundState
+    audio.arm()
+    audio.startOnLoad()
+    return () => {
+      audio.onChange = null
+      audio.dispose()
+    }
   }, [])
 
   useEffect(() => {
@@ -69,9 +88,10 @@ export default function App() {
       runtime.scroll.target = clamp(window.scrollY / max, 0, 1)
     }
 
-    const cache = { sil: '', glow: '', city: '', rail: '', signal: '', grab: '', ret: '', hint: '', stage: -1 }
+    const cache = { sil: '', glow: '', city: '', rail: '', signal: '', grab: '', ret: '', hint: '', stage: -1, intro: '', entrance: '', hud: '' }
     let raf = 0
     let last = performance.now()
+    const armed = last
 
     const tick = (now) => {
       raf = requestAnimationFrame(tick)
@@ -81,10 +101,38 @@ export default function App() {
       runtime.scroll.current = damp(runtime.scroll.current, runtime.scroll.target, 5.5, dt)
       const p = runtime.scroll.current
       runtime.reveal.current = revealAmount(p)
+      audio.update() // the sound rides the same progress the scene is animating
+
+      /* the load entrance: it runs once, timed from the first frame the device is really
+         rendering — with a fallback so a context that never comes up cannot leave the page black */
+      const entrance = runtime.entrance
+      if (!entrance.started && (runtime.ready || now - armed > 1000)) {
+        entrance.started = true
+        entrance.startedAt = now
+      }
+      entrance.progress = runtime.reducedMotion
+        ? 1
+        : entrance.started
+          ? clamp((now - entrance.startedAt) / (ENTRANCE.duration * 1000))
+          : 0
+
       const reveal = runtime.reveal.current
       const away = runtime.away.current
       const t = targets.current
       if (!t || !t.silhouettes) return
+
+      /* the curtain lifts as CURLBY rises, and the chrome arrives with the city behind it */
+      const curtain = entranceCurtain(entrance.progress)
+      const curtainKey = curtain.toFixed(3)
+      if (curtainKey !== cache.entrance) {
+        cache.entrance = curtainKey
+        if (t.entrance) t.entrance.style.opacity = curtainKey
+      }
+      const chromeKey = (1 - curtain).toFixed(3)
+      if (chromeKey !== cache.hud) {
+        cache.hud = chromeKey
+        if (t.hud) t.hud.style.opacity = chromeKey
+      }
 
       /* the blurred street: indistinct at the top, dissolving as the echo city arrives,
          and flooding back — blurrier — while the device is off the ear */
@@ -169,6 +217,23 @@ export default function App() {
           t.grabRing.style.setProperty('--grab-size', `${Math.round(d.radius * 2.1)}px`)
         }
       }
+
+      /* the product introduction: revealed only while the pointer is over the worn device itself.
+         Same hit test as the grab, so the dashed ring the user can see is exactly the hover zone. */
+      const intro = runtime.intro
+      const overDevice =
+        d.visible &&
+        d.seated > 0.5 &&
+        runtime.pointer.inside &&
+        Math.hypot(runtime.pointer.x - d.x, runtime.pointer.y - d.y) < d.radius
+      const introVisible = (overDevice || intro.tapOpened) && !runtime.held
+      intro.over = overDevice
+      intro.visible = introVisible
+      const introKey = introVisible ? 'true' : 'false'
+      if (introKey !== cache.intro) {
+        cache.intro = introKey
+        if (t.intro) t.intro.setAttribute('data-visible', introKey)
+      }
     }
 
     readScroll()
@@ -225,6 +290,7 @@ export default function App() {
     const onPointerUp = (e) => {
       const grab = runtime.grab
       const wasDragging = grab.dragging
+      const wasOnDevice = grab.active
       const elapsed = performance.now() - grab.startedAt
       const { dx, dy } = grab
       grab.active = false
@@ -239,6 +305,12 @@ export default function App() {
       // a horizontal swipe across the background — never a grab — changes the finish
       if (!wasDragging && Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.15 && elapsed < 900) {
         stepColour(dx > 0 ? 1 : -1)
+      }
+      // touchscreens have no hover: a tap on the device opens the introduction, a tap elsewhere closes it
+      const tapped = Math.abs(dx) < 8 && Math.abs(dy) < 8 && elapsed < 500
+      if (tapped) {
+        runtime.intro.tapOpened =
+          e.pointerType === 'touch' && wasOnDevice ? !runtime.intro.tapOpened : false
       }
     }
 
@@ -278,6 +350,8 @@ export default function App() {
         stepColour(-1)
       } else if (e.key === 'r' || e.key === 'R') {
         returnHome()
+      } else if (e.key === 'i' || e.key === 'I') {
+        runtime.intro.tapOpened = !runtime.intro.tapOpened // reveal the introduction without a pointer
       }
     }
     window.addEventListener('keydown', onKey)
@@ -298,6 +372,8 @@ export default function App() {
           held: runtime.held,
           ready: runtime.ready,
           device: { ...runtime.deviceScreen },
+          audio: { ...runtime.audio },
+          intro: { ...runtime.intro },
         }
       },
       setColour: selectColour,
@@ -317,7 +393,13 @@ export default function App() {
       <Experience colourIndex={colourIndex} />
       {/* the interaction layer: full screen, above the canvases, below the UI */}
       <div className="cb-pointer-layer" ref={stageRef} />
-      <Hud colourIndex={colourIndex} onColour={selectColour} onReturn={returnHome} />
+      <Hud
+        colourIndex={colourIndex}
+        onColour={selectColour}
+        onReturn={returnHome}
+        soundState={soundState}
+        onToggleSound={toggleSound}
+      />
       {/* gives the page its scroll length; the stage itself is fixed */}
       <div className="cb-scroll-space" aria-hidden="true" />
     </div>

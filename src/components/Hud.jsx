@@ -2,20 +2,48 @@ import { COLORWAYS } from '../lib/colorways.js'
 import { ROLES } from '../lib/runtime.js'
 import { STAGES } from '../lib/stages.js'
 
+/** The sound control in the HUD's own voice — 'ready' means the browser has not allowed audio yet. */
+const SOUND_LABELS = {
+  ready: 'Enable sound',
+  on: 'Sound on',
+  off: 'Sound off',
+  unavailable: 'No audio',
+}
+
 /**
  * The overlay. Deliberately dumb: everything that changes every frame (progress, signal,
  * the grab ring) is written imperatively by App's frame loop through the `data-role` hooks,
  * so scrolling never triggers a React render.
  */
-export default function Hud({ colourIndex, onColour, onReturn }) {
+export default function Hud({ colourIndex, onColour, onReturn, soundState, onToggleSound }) {
   const colour = COLORWAYS[colourIndex]
 
   return (
-    <div className="cb-hud">
+    <div className="cb-hud" data-role={ROLES.hud}>
       <header className="cb-top">
         <div className="cb-brand">
           <span className="cb-brand__mark">CURLBY</span>
           <span className="cb-brand__sub">Spatial hearing · acoustic echo</span>
+          {/* sound: 'ready' means the browser has not been allowed to play audio yet */}
+          <button
+            className="cb-sound"
+            type="button"
+            data-role={ROLES.soundButton}
+            data-state={soundState}
+            aria-pressed={soundState === 'on'}
+            title={soundState === 'on' ? 'Turn sound off' : 'Turn sound on'}
+            onClick={onToggleSound}
+          >
+            <span className="cb-sound__icon" aria-hidden="true">
+              <svg viewBox="0 0 16 14" width="15" height="13">
+                <path className="cb-sound__body" d="M1.2 5.1h2.3L7.1 1.6v10.8L3.5 8.9H1.2z" />
+                <path className="cb-sound__wave" d="M9.3 4.6a3.4 3.4 0 0 1 0 4.8" />
+                <path className="cb-sound__wave cb-sound__wave--far" d="M11.3 2.6a6.1 6.1 0 0 1 0 8.8" />
+                <path className="cb-sound__slash" d="M1.6 12.4 14.4 1.6" />
+              </svg>
+            </span>
+            <span className="cb-sound__label">{SOUND_LABELS[soundState]}</span>
+          </button>
         </div>
 
         <div className="cb-finish">
@@ -41,6 +69,20 @@ export default function Hud({ colourIndex, onColour, onReturn }) {
           </div>
         </div>
       </header>
+
+      {/* the product introduction: revealed while the pointer is over the worn device itself.
+          Its position in the DOM matters — the stage captions fade back via the sibling rule. */}
+      <aside className="cb-intro" data-role={ROLES.intro} data-visible="false">
+        <p className="cb-intro__eyebrow">CURLBY</p>
+        <h2 className="cb-intro__title">Hear beyond the silence.</h2>
+        <p className="cb-intro__lead">A new way to experience the world.</p>
+        <p className="cb-intro__copy">
+          CURLBY is a fashion-forward sensory wearable designed to help blind and visually impaired
+          people interpret their surroundings. It uses echolocation-inspired sound processing to
+          transform environmental sounds into spatial information, delivered through vibrations
+          around the mastoid bone.
+        </p>
+      </aside>
 
       <div className="cb-stages">
         {STAGES.map((stage, i) => (

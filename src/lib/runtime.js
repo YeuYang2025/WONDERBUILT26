@@ -26,6 +26,10 @@ export const ROLES = {
   hint: 'scroll-hint',
   grabRing: 'grab-ring',
   returnButton: 'return-button',
+  soundButton: 'sound-button',
+  intro: 'intro',
+  hud: 'hud',
+  entrance: 'entrance',
   caption: 'caption',
 }
 
@@ -79,6 +83,12 @@ export function createRuntime() {
     reducedMotion: false,
     /** set to true by DeviceCanvas once the WebGL context is live */
     ready: false,
+    /** published by the sound engine: which layer is winning, and whether audio is really on */
+    audio: { on: false, available: true, staticLevel: 1, echoLevel: 0 },
+    /** the product introduction: hovering the worn device reveals it, tapping toggles it */
+    intro: { over: false, tapOpened: false, visible: false },
+    /** the load entrance: driven once by App's frame loop, read by the device rig */
+    entrance: { started: false, startedAt: 0, progress: 0 },
   }
 }
 
